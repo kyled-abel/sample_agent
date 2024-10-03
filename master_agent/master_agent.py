@@ -7,6 +7,7 @@ from langchain.prompts.few_shot import FewShotPromptTemplate
 from langchain.prompts.prompt import PromptTemplate
 import os
 import openai
+import re
 import requests
 
 app = Flask(__name__)
@@ -62,8 +63,22 @@ def hello_world():
     )
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
+    # Change the input here.
     output = agent_executor.invoke({"input": "1+1+1*2*3+1=?"})
-    return f"{output['output']}"
+
+    operations = re.findall(r'\((.*?)\)', output['output'])
+
+    pre_answer = 0
+    for op in operations:
+        if op.contains('answer'):
+            op = op.replace('answer', str(pre_answer))
+
+        if op.contains('+'):
+            pre_answer = int(requests.get('http://agent1:5001/addition', json={'operation': op}))
+        elif op.contains('*'):
+            pre_answer = int(requests.get('http://agent1:5002/multiplication', json={'operation': op}))
+
+    return f"opertaions: {operations} \nanswer: {pre_answer}"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

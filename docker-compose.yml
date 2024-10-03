@@ -1,0 +1,21 @@
+version: '3'
+services:
+  master_agent:
+    build: ./master_agent
+    ports:
+      - "5000:5000"
+    depends_on:
+      - agent1
+    networks:
+      - app-network
+
+  agent1:
+    build: ./agent1
+    ports:
+      - "5001:5001"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

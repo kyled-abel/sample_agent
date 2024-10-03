@@ -4,6 +4,8 @@ services:
     build: ./master_agent
     ports:
       - "5000:5000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - agent1
     networks:
@@ -13,6 +15,8 @@ services:
     build: ./agent1
     ports:
       - "5001:5001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
       - app-network
 

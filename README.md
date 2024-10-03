@@ -2,4 +2,10 @@
 
 To build the Docker containers, run `docker-compose build`
 
-To run the Docker containter, run `docker run -e OPENAI_API_KEY=$YourApiKeyHere$ master_agent`
+To start the Docker containters, run `docker-compose up` then visit http://localhost:5000
+
+Please store your OpenAI API key in a `.env` file as 
+
+```
+OPENAI_API_KEY=${Your Key here}
+```

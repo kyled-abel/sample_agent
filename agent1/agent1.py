@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from langchain_openai import ChatOpenAI
 import os
 import openai
@@ -6,12 +6,12 @@ import openai
 app = Flask(__name__)
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
-@app.route('/')
+@app.route('/addition')
 def hello_world():
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+    operation = request.headers.get('operation')
 
-    output = llm.invoke("What would be the AI equivalent of Hello World?")
-    return output.content
+    output = str(eval(operation))
+    return output
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)

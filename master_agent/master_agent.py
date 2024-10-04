@@ -12,10 +12,11 @@ import requests
 
 app = Flask(__name__)
 openai.api_key = os.environ["OPENAI_API_KEY"]
+input = "1+1+2+3=?"
 
 @app.route('/')
 def hello_world():
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+    llm = ChatOpenAI(model="gpt-4-turbo", temperature=0)
     tools=[]
 
     examples = [
@@ -64,21 +65,21 @@ def hello_world():
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
     # Change the input here.
-    output = agent_executor.invoke({"input": "1+1+1*2*3+1=?"})
+    output = agent_executor.invoke({"input": input})
 
     operations = re.findall(r'\((.*?)\)', output['output'])
 
     pre_answer = 0
     for op in operations:
-        if op.contains('answer'):
+        if 'answer' in op:
             op = op.replace('answer', str(pre_answer))
 
-        if op.contains('+'):
-            pre_answer = int(requests.get('http://agent1:5001/addition', json={'operation': op}))
-        elif op.contains('*'):
-            pre_answer = int(requests.get('http://agent1:5002/multiplication', json={'operation': op}))
+        if '+' in op:
+            pre_answer = int(requests.get('http://agent1:5001/addition', headers={'operation': op}).text)
+        elif '*' in op:
+            pre_answer = int(requests.get('http://agent1:5001/addition', headers={'operation': op}).text)
 
-    return f"opertaions: {operations} \nanswer: {pre_answer}"
+    return f"intput: {input} opertaions: {operations} answer: {pre_answer}"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

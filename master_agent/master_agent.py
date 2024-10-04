@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad import format_to_openai_function_messages
@@ -12,10 +12,10 @@ import requests
 
 app = Flask(__name__)
 openai.api_key = os.environ["OPENAI_API_KEY"]
-input = "2*1+1+2+3=?"
 
-@app.route('/')
+@app.route('/calculator')
 def hello_world():
+    input = request.args.get('question').replace(' ', '+')
     llm = ChatOpenAI(model="gpt-4-turbo", temperature=0)
     tools=[]
 

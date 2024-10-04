@@ -12,7 +12,7 @@ import requests
 
 app = Flask(__name__)
 openai.api_key = os.environ["OPENAI_API_KEY"]
-input = "1+1+2+3=?"
+input = "2*1+1+2+3=?"
 
 @app.route('/')
 def hello_world():
@@ -21,24 +21,24 @@ def hello_world():
 
     examples = [
         {
-            "question": "1+1=?",
+            "question": "1+1=? return only the steps",
             "answer": "Step1. (1+1)"
         },
         {
-            "question": "1+1*2=?",
-            "answer": "Step1. (1*2)\nStep2. (1+answer)"
+            "question": "1+1*2=? return only the steps",
+            "answer": "Step1. (1*2)\nStep2. (1+prev_answer)"
         },
         {
-            "question": "(1+1)*2=?",
-            "answer": "Step1. (1+1)\nStep2. (answer*2)"
+            "question": "(1+1)*2=? return only the steps",
+            "answer": "Step1. (1+1)\nStep2. (prev_answer*2)"
         },
         {
-            "question": "(1+1)*2*2+1=?",
-            "answer": "Step1. (1+1)\nStep2. (answer*2)\nStep3. (answer*2)\nStep4. (answer+1)"
+            "question": "(1+1)*2*2+1=? return only the steps",
+            "answer": "Step1. (1+1)\nStep2. (prev_answer*2)\nStep3. (prev_answer*2)\nStep4. (prev_answer+1)"
         },
         {
-            "question": "1+1*2*2+1=?",
-            "answer": "Step1. (1*2)\nStep2. (answer*2)\nStep3. (1+answer)\nStep4. (answer+1)"
+            "question": "1+1*2*2+1=? return only the steps",
+            "answer": "Step1. (1*2)\nStep2. (prev_answer*2)\nStep3. (1+prev_answer)\nStep4. (prev_answer+1)"
         },
     ]
 
@@ -65,21 +65,24 @@ def hello_world():
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
     # Change the input here.
-    output = agent_executor.invoke({"input": input})
+    output = agent_executor.invoke({"input": input+" return only the steps"})
 
     operations = re.findall(r'\((.*?)\)', output['output'])
 
     pre_answer = 0
-    for op in operations:
-        if 'answer' in op:
-            op = op.replace('answer', str(pre_answer))
+    try:
+        for op in operations:
+            if 'answer' in op:
+                op = op.replace('prev_answer', str(pre_answer))
 
-        if '+' in op:
-            pre_answer = int(requests.get('http://agent1:5001/addition', headers={'operation': op}).text)
-        elif '*' in op:
-            pre_answer = int(requests.get('http://agent1:5001/addition', headers={'operation': op}).text)
+            if '+' in op:
+                pre_answer = int(requests.get('http://agent1:5001/addition', headers={'operation': op}).text)
+            elif '*' in op:
+                pre_answer = int(requests.get('http://agent2:5002/multiplication', headers={'operation': op}).text)
 
-    return f"intput: {input} opertaions: {operations} answer: {pre_answer}"
+        return f"<p>agent output: {output}</p> <p>opertaions: {operations}</p> <p>answer: {pre_answer}</p>"
+    except Exception as error:
+        return f"<p>An exception occurred.</p> <p>agent output: {output} opertaions: {operations}.</p> <p>Error message {error}</p>"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
